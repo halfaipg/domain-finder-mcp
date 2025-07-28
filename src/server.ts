@@ -245,10 +245,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         } else if (validated.domains) {
           // Multiple domains check
           const results = await domainService.checkMultipleDomains(validated.domains);
-          
+
           let output = "BATCH DOMAIN CHECK\n";
           output += "=".repeat(20) + "\n\n";
-          
+
           const available = results.filter(r => r.available && !r.isPremium);
           const premium = results.filter(r => r.available && r.isPremium);
           const taken = results.filter(r => !r.available);
@@ -256,11 +256,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           if (available.length > 0) {
             output += "✅ AVAILABLE:\n";
             available.forEach(result => {
-              output += `✓ ${result.domain}\n`;
-            });
-            output += "\n";
-          }
-          
+            output += `✓ ${result.domain}\n`;
+          });
+          output += "\n";
+        }
+
           if (premium.length > 0) {
             output += "💎 PREMIUM AVAILABLE:\n";
             premium.forEach(result => {
@@ -276,8 +276,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           if (taken.length > 0) {
             output += "❌ TAKEN:\n";
             taken.forEach(result => {
-              output += `✗ ${result.domain}\n`;
-            });
+            output += `✗ ${result.domain}\n`;
+          });
             output += "\n";
           }
           
@@ -290,7 +290,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }]
           };
         }
-        
+
         return {
           content: [{
             type: "text",
@@ -352,7 +352,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           });
           output += "\n";
         }
-
+        
         return {
           content: [{
             type: "text",

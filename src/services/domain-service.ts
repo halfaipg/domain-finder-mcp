@@ -370,9 +370,16 @@ export class DomainService {
       }));
       
       const checkedResults = await this.checkDomainsInBatches(domainsToCheck, extractedKeywords);
-      availableStandouts = checkedResults.filter(result => result.available && !result.isPremium);
       
-      stats.push(`Available standouts found: ${availableStandouts.length}`);
+      // Match the suggestion tool logic exactly
+      const available = checkedResults.filter((r: DomainResult) => r.available);
+      const taken = checkedResults.filter((r: DomainResult) => !r.available && !r.isPremium);
+      const premium = checkedResults.filter((r: DomainResult) => r.isPremium);
+      
+      // Show all available domains (including premium) like the suggestion tool
+      availableStandouts = available;
+      
+      stats.push(`Available standouts found: ${available.length} (${premium.length} premium)`);
     }
     
     // Add final stats
