@@ -1,0 +1,40 @@
+{
+  "name": "domain-finder-mcp",
+  "version": "1.0.0",
+  "description": "Intelligent domain name suggestion MCP server with real-time availability checking",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js --stdio",
+    "dev": "tsx watch src/server.ts",
+    "setup": "./setup.sh"
+  },
+  "keywords": [
+    "mcp",
+    "domain",
+    "domain-names",
+    "ai",
+    "cursor",
+    "claude-code",
+    "namecheap",
+    "domainr"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "axios": "^1.6.7",
+    "dotenv": "^17.2.1",
+    "fast-xml-parser": "^4.3.4",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
