@@ -5,7 +5,7 @@ Intelligent domain name suggestion MCP server with real-time availability checki
 ## Key Features
 
 - **Multi-Provider Domain Checking**: Switch between Namecheap and Domainr APIs
-- **Local & Cloud LLMs**: Support for Ollama, OpenAI, Groq, Together AI, and more
+- **Local & Cloud LLMs**: Support for Ollama, OpenAI, Groq, etc
 - **1,441+ TLDs**: Comprehensive domain coverage with smart categorization
 - **Advanced Generation**: Word slicing, portmanteau, LLM-powered creative strategies
 - **Universal MCP**: Works with Cursor, Claude Code, and any MCP-compatible tool
