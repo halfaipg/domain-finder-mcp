@@ -15,7 +15,7 @@ Intelligent domain name suggestion MCP server with real-time availability checki
 
 ```bash
 git clone https://github.com/halfaipg/domain-finder-mcp
-cd brandstorm.ai
+cd domain-finder-mcp
 ./setup.sh
 ```
 
