@@ -28,8 +28,8 @@ Then edit `.env` with your API keys and restart your MCP tool.
 - **Domainr**: Broader TLD support, RapidAPI integration
 
 ### LLM Providers
-- **Local**: Ollama with llama2, mistral, codellama
-- **Cloud**: OpenAI, Groq, Together AI, Anthropic
+- **Local**: Ollama with any local model
+- **Cloud**: OpenAI, Groq, Together AI, Anthropic etc
 - **Custom**: Any OpenAI-compatible endpoint
 
 ## Available Tools
