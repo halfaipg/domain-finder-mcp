@@ -43,8 +43,8 @@ Then edit `.env` with your API keys and restart your MCP tool.
 ## Configuration
 
 ### Domain Providers
-- **Namecheap**: High-volume checking, premium pricing
-- **Domainr**: Broader TLD support, RapidAPI integration
+- **Namecheap**: Requires $50 spent on account or some other prerequisite
+- **Domainr**: RapidAPI integration, free tier
 
 ### LLM Providers
 - **Local**: Ollama with any local model
