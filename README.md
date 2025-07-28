@@ -107,6 +107,10 @@ deep-tld for "coffee shop" with wild creativity
 - [MCP Setup Guide](MCP_SETUP.md) - Universal configuration
 - [API Provider Setup](README.md#api-provider-setup) - Detailed setup instructions
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=halfaipg/domain-finder-mcp&type=Date)](https://star-history.com/#halfaipg/domain-finder-mcp&Date)
+
 ## License
 
 MIT License
