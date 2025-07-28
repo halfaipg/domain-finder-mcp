@@ -13,7 +13,7 @@ const domainService = new DomainService();
 // Create server instance
 const server = new Server(
   {
-    name: 'brandstorm-domains',
+    name: 'domain-finder',
     version: '1.0.0',
   },
   {
