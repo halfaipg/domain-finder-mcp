@@ -16,8 +16,10 @@ For any MCP-compatible tool (Cursor, Claude Code, etc.), use these settings:
 ## Tool-Specific Setup
 
 ### Cursor
-1. **Automatic**: Run `./setup.sh` (installs config automatically)
-2. **Manual**: Copy `.cursor/mcp.json` to `~/.cursor/mcp.json`
+1. **Automatic**: 
+   - **macOS/Linux**: Run `./setup.sh` (installs config automatically)
+   - **Windows**: Run `.\setup.ps1` (installs config automatically)
+2. **Manual**: Copy `.cursor/mcp.json` to `~/.cursor/mcp.json` (macOS/Linux) or `%USERPROFILE%\.cursor\mcp.json` (Windows)
 3. **UI**: Settings → Extensions → MCP Servers → Add New
 
 ### Claude Code
@@ -42,4 +44,6 @@ Use the universal configuration in your tool's MCP settings.
 - **Node not found**: Install Node.js or use full path
 - **API errors**: Check `.env` configuration
 - **Tool not recognized**: Restart your MCP application
-- **Path issues**: Use absolute path in working directory 
+- **Path issues**: Use absolute path in working directory
+- **PowerShell execution policy**: If `.\setup.ps1` fails, run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+- **Windows path separators**: Use backslashes (`\`) in Windows paths, forward slashes (`/`) in Unix paths 

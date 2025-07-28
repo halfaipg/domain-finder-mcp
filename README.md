@@ -13,10 +13,27 @@ Intelligent domain name suggestion MCP server with real-time availability checki
 
 ## Quick Setup
 
+### macOS/Linux
 ```bash
 git clone https://github.com/halfaipg/domain-finder-mcp
 cd domain-finder-mcp
 ./setup.sh
+```
+
+### Windows
+```powershell
+git clone https://github.com/halfaipg/domain-finder-mcp
+cd domain-finder-mcp
+.\setup.ps1
+```
+
+### Manual Setup (All Platforms)
+```bash
+git clone https://github.com/halfaipg/domain-finder-mcp
+cd domain-finder-mcp
+npm install
+npm run build
+cp .env.example .env  # or create .env manually
 ```
 
 Then edit `.env` with your API keys and restart your MCP tool.
