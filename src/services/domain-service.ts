@@ -61,6 +61,7 @@ export class DomainService {
   private providerName: string;
   private allTlds: string[];
   private techTlds: string[];
+  private funTlds: string[];
   private countryTlds: string[];
   private brandTlds: string[];
   private creativeWords: string[];
@@ -79,6 +80,10 @@ export class DomainService {
     
     this.techTlds = this.allTlds.filter(tld => 
       ['.ai', '.tech', '.io', '.app', '.dev', '.software', '.digital', '.cloud', '.data', '.computer', '.network', '.systems', '.science'].includes(tld)
+    );
+    
+    this.funTlds = this.allTlds.filter(tld => 
+      ['.fun', '.party', '.club', '.bar', '.pub', '.love', '.sexy', '.hot', '.cool', '.lol', '.wtf', '.porn', '.xxx', '.adult', '.gay', '.dating', '.pizza', '.coffee', '.beer', '.wine', '.vodka', '.tattoo', '.hair', '.yoga'].includes(tld)
     );
     
     this.countryTlds = this.allTlds.filter(tld => 
@@ -277,6 +282,7 @@ export class DomainService {
         // Use creative and modern TLDs
         baseTlds = [
           ...this.techTlds,
+          ...this.funTlds,
           '.co', '.xyz', '.space', '.site', '.online', '.world', '.today', '.life',
           '.works', '.studio', '.agency', '.solutions', '.digital', '.ninja'
         ];
