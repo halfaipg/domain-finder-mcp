@@ -44,6 +44,6 @@ Use the universal configuration in your tool's MCP settings.
 - **Node not found**: Install Node.js or use full path
 - **API errors**: Check `.env` configuration
 - **Tool not recognized**: Restart your MCP application
-- **Path issues**: Use absolute path in working directory
+- **Path issues**: Use absolute path in working directory 
 - **PowerShell execution policy**: If `.\setup.ps1` fails, run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
 - **Windows path separators**: Use backslashes (`\`) in Windows paths, forward slashes (`/`) in Unix paths 

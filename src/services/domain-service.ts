@@ -30,6 +30,16 @@ interface SearchResult {
   provider: string;
 }
 
+interface DeepTldResult {
+  standouts: Array<{
+    domain: string;
+    score: number;
+    reason: string;
+  }>;
+  available: DomainResult[];
+  stats: string[];
+}
+
 // Configuration
 const OPENAI_API = {
   url: process.env.OPENAI_API_URL || '',
@@ -263,6 +273,128 @@ export class DomainService {
     };
   }
 
+  async checkMultipleDomains(domains: string[]): Promise<DomainResult[]> {
+    const domainsToCheck = domains.map(domain => ({
+      domain,
+      strategy: 'batch-check'
+    }));
+    
+    return await this.checkDomainsInBatches(domainsToCheck, []);
+  }
+
+  async deepTldExploration(
+    businessDescription: string,
+    keywords: string[] = [],
+    batchSize: number = 200,
+    maxBatches: number = 10,
+    creativityLevel: 'conservative' | 'moderate' | 'wild' = 'moderate',
+    checkAvailability: boolean = false
+  ): Promise<DeepTldResult> {
+    const extractedKeywords = keywords.length > 0 ? keywords : this.extractKeywords(businessDescription);
+    const allTlds = [...this.allTlds];
+    const standouts: Array<{ domain: string; score: number; reason: string }> = [];
+    const available: DomainResult[] = [];
+    const stats: string[] = [];
+    
+    // LLM-POWERED EXPLORATION - Use ALL TLDs in batches
+    const shuffledTlds = this.shuffleArray(allTlds);
+    let totalCombinations = 0;
+    let totalBatches = 0;
+    
+    // Process ALL TLDs in batches (not just a subset)
+    const totalTlds = shuffledTlds.length;
+    const actualBatchSize = Math.min(batchSize, Math.ceil(totalTlds / maxBatches));
+    const actualMaxBatches = Math.ceil(totalTlds / actualBatchSize);
+    
+    for (let batch = 0; batch < actualMaxBatches; batch++) {
+      const startIndex = batch * actualBatchSize;
+      const endIndex = Math.min(startIndex + actualBatchSize, totalTlds);
+      const batchTlds = shuffledTlds.slice(startIndex, endIndex);
+      
+      if (batchTlds.length === 0) break;
+      
+      totalBatches++;
+      
+      // Let LLM brainstorm with this batch of TLDs
+      const batchCombinations = await this.llmBrainstormWithTlds(
+        businessDescription,
+        extractedKeywords,
+        batchTlds,
+        creativityLevel,
+        Math.min(actualBatchSize * 2, 300) // Generate more combinations per batch
+      );
+      
+      // Score the LLM-generated combinations
+      const scoredBatch = batchCombinations.map(combo => ({
+        domain: combo.domain,
+        score: this.calculateAdvancedScore(combo.domain, combo.strategy, extractedKeywords),
+        strategy: combo.strategy,
+        reason: this.generateStandoutReason(combo.domain, combo.strategy, extractedKeywords)
+      }));
+      
+      // Add high-scoring combinations to standouts
+      const highScoringBatch = scoredBatch
+        .filter(combo => combo.score >= 6)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+      
+      standouts.push(...highScoringBatch.map(combo => ({
+        domain: combo.domain,
+        score: combo.score,
+        reason: combo.reason
+      })));
+      
+      totalCombinations += batchCombinations.length;
+      
+      // Add batch stats
+      stats.push(`Batch ${batch + 1}: LLM brainstormed ${batchCombinations.length} combinations from ${batchTlds.length} TLDs`);
+      
+      // Rate limiting between LLM calls
+      if (batch < maxBatches - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    // Sort all standouts by score and take top ones
+    standouts.sort((a, b) => b.score - a.score);
+    const topStandouts = standouts.slice(0, 30);
+    
+    // Optional availability checking for top standouts
+    let availableStandouts: DomainResult[] = [];
+    if (checkAvailability && topStandouts.length > 0) {
+      stats.push(`Checking availability for top ${topStandouts.length} standouts...`);
+      
+      const domainsToCheck = topStandouts.map(standout => ({
+        domain: standout.domain,
+        strategy: 'llm-brainstorm'
+      }));
+      
+      const checkedResults = await this.checkDomainsInBatches(domainsToCheck, extractedKeywords);
+      availableStandouts = checkedResults.filter(result => result.available && !result.isPremium);
+      
+      stats.push(`Available standouts found: ${availableStandouts.length}`);
+    }
+    
+    // Add final stats
+    stats.push(`LLM exploration completed: ${totalCombinations} combinations generated`);
+    stats.push(`High-scoring standouts found: ${topStandouts.length}`);
+    stats.push(`Explored TLDs: ${totalTlds} out of ${allTlds.length} total TLDs (100% coverage!)`);
+    stats.push(`Creativity level: ${creativityLevel}`);
+    stats.push(`LLM batches processed: ${totalBatches}`);
+    stats.push(`Batch size: ${actualBatchSize} TLDs per batch`);
+    if (checkAvailability) {
+      stats.push(`Availability checking: ENABLED`);
+    } else {
+      stats.push(`Availability checking: DISABLED (use check-domain tool for specific domains)`);
+    }
+    
+    return {
+      standouts: topStandouts,
+      available: availableStandouts,
+      stats
+    };
+  }
+
   private extractKeywords(description: string): string[] {
     const words = description.toLowerCase()
       .replace(/[^a-z\s]/g, '')
@@ -363,18 +495,31 @@ export class DomainService {
   ): Promise<{ domain: string; strategy: string }[]> {
     const domains: { domain: string; strategy: string }[] = [];
     
-    // Strategy 1: Direct keyword combinations
-    for (const keyword of keywords.slice(0, 3)) {
-      for (const tld of tlds.slice(0, 10)) {
+    // Strategy 1: LLM-powered intelligent brainstorming (like deep-TLD)
+    const creativityLevel = mode === 'competitive' ? 'wild' : mode === 'premium' ? 'conservative' : 'moderate';
+    const llmDomains = await this.llmBrainstormWithTlds(
+      description,
+      keywords,
+      tlds,
+      creativityLevel,
+      Math.floor(count * 0.6) // 60% from LLM brainstorming
+    );
+    domains.push(...llmDomains);
+    
+    // Strategy 2: Direct keyword combinations (reduced)
+    for (const keyword of keywords.slice(0, 2)) {
+      for (const tld of tlds.slice(0, 5)) {
+        if (domains.length < count) {
         domains.push({
           domain: `${keyword}${tld}`,
           strategy: 'direct-keyword'
         });
+        }
       }
     }
 
-    // Strategy 2: Word slicing with TLD integration
-    for (const keyword of keywords) {
+    // Strategy 3: Word slicing with TLD integration (reduced)
+    for (const keyword of keywords.slice(0, 2)) {
       for (const tld of tlds) {
         const tldPart = tld.slice(1); // Remove the dot
         if (keyword.endsWith(tldPart)) {
@@ -506,14 +651,25 @@ Generate 15 highly creative domain names. Be innovative with TLD usage.
 Respond with ONLY domain names, one per line.`;
   }
 
-  private async getLLMSuggestions(prompt: string): Promise<string[]> {
+  private async getLLMSuggestions(prompt: string, creativityLevel: string = 'moderate'): Promise<string[]> {
+    // Adjust temperature based on creativity level
+    const getTemperature = (level: string): number => {
+      switch (level) {
+        case 'conservative': return 0.6; // More focused, less random
+        case 'moderate': return 0.8;     // Balanced creativity
+        case 'wild': return 1.0;         // Maximum creativity
+        default: return 0.8;
+      }
+    };
+    
+    const temperature = getTemperature(creativityLevel);
     try {
       if (LLM_PROVIDER === "openai") {
         const response = await axios.post(OPENAI_API.url, {
           model: OPENAI_API.model,
           messages: [{ role: "user", content: prompt }],
           max_tokens: 800,
-          temperature: 0.9
+          temperature: temperature
         }, {
           headers: {
             'Authorization': `Bearer ${OPENAI_API.key}`,
@@ -528,7 +684,7 @@ Respond with ONLY domain names, one per line.`;
           prompt: prompt,
           stream: false,
           options: {
-            temperature: 0.9,
+            temperature: temperature,
             top_p: 0.95,
             max_tokens: 800
           }
@@ -708,5 +864,225 @@ Respond with ONLY domain names, one per line.`;
            !domain.includes('--') &&
            !domain.startsWith('-') &&
            !domain.endsWith('-');
+  }
+
+  private async llmBrainstormWithTlds(
+    businessDescription: string,
+    keywords: string[],
+    tlds: string[],
+    creativityLevel: string,
+    count: number
+  ): Promise<{ domain: string; strategy: string }[]> {
+    const combinations: { domain: string; strategy: string }[] = [];
+    
+    // Create a focused prompt for the LLM with this specific batch of TLDs
+    const tldList = tlds.join(', '); // Use ALL TLDs in this batch
+    const creativityInstructions = creativityLevel === 'wild' ? 
+      'Be extremely creative and unconventional. Think outside the box!' :
+      creativityLevel === 'moderate' ? 
+      'Balance creativity with professionalism. Mix safe and innovative options.' :
+      'Focus on professional, established naming patterns.';
+    
+    const prompt = `You are a creative domain name expert. Do freeform brainstorming to find the best domain names for this business using any of these TLDs:
+
+Business: ${businessDescription}
+Keywords: ${keywords.join(', ')}
+Available TLDs: ${tldList}
+
+Brainstorm creatively! Look for:
+1. TLDs that complete words (e.g. "genera.tor", "innova.tion", "crea.tive")
+2. TLDs related to the business (e.g. ".ai" for AI company, ".tech" for tech, ".coffee" for coffee shop)
+3. Fun wordplay and puns with TLDs
+4. Short, memorable combinations
+5. TLDs that represent the company's values or industry
+6. Creative mismatches that are surprisingly memorable
+
+${creativityInstructions}
+
+Be creative! Think outside the box. Try different approaches:
+- What if the brand name flows into the TLD?
+- What TLDs relate thematically to this business?
+- What unexpected TLD combinations might be brilliant?
+
+Return domain names in any format, one per line. Focus on the most creative and memorable combinations you can think of.`;
+
+    try {
+      const llmSuggestions = await this.getLLMSuggestions(prompt, creativityLevel);
+      
+              // Parse the LLM response
+        for (const suggestion of llmSuggestions) {
+          const domains = this.parseLLMResponse(suggestion);
+        for (const domain of domains) {
+          if (this.isValidDomain(domain) && combinations.length < count) {
+            // Check if the domain uses one of our TLDs
+            const domainTld = domain.split('.').pop();
+            if (domainTld && tlds.some(tld => tld.includes(domainTld))) {
+              combinations.push({
+                domain,
+                strategy: 'llm-intelligent-tld'
+              });
+            }
+          }
+        }
+      }
+    } catch (error) {
+      // Fallback to basic combinations if LLM fails
+      console.warn('LLM brainstorming failed, using fallback combinations');
+      for (const keyword of keywords.slice(0, 3)) {
+        for (const tld of tlds.slice(0, Math.floor(count / 3))) {
+          if (combinations.length < count) {
+            combinations.push({
+              domain: `${keyword}${tld}`,
+              strategy: 'fallback-keyword'
+            });
+          }
+        }
+      }
+    }
+    
+    return combinations.slice(0, count);
+  }
+
+  private async generateDeepTldCombinations(
+    description: string,
+    keywords: string[],
+    tlds: string[],
+    creativityLevel: string,
+    count: number
+  ): Promise<{ domain: string; strategy: string }[]> {
+    const combinations: { domain: string; strategy: string }[] = [];
+    
+    // Strategy 1: Direct keyword + TLD
+    for (const keyword of keywords.slice(0, 3)) {
+      for (const tld of tlds.slice(0, Math.floor(count / 3))) {
+        combinations.push({
+          domain: `${keyword}${tld}`,
+          strategy: 'direct-keyword'
+        });
+      }
+    }
+    
+    // Strategy 2: Creative word + TLD
+    const creativeWords = creativityLevel === 'wild' ? 
+      [...this.creativeWords, 'epic', 'rad', 'swag', 'yolo', 'lol', 'omg', 'wtf', 'fml', 'smh', 'btw', 'imo', 'tldr', 'ama', 'til', 'eli5', 'nsfw', 'sfw', 'irl', 'afk', 'brb', 'ttyl', 'rofl', 'lmao'] :
+      this.creativeWords;
+    
+    for (const word of creativeWords.slice(0, 5)) {
+      for (const tld of tlds.slice(0, Math.floor(count / 5))) {
+        combinations.push({
+          domain: `${word}${tld}`,
+          strategy: 'creative-word'
+        });
+      }
+    }
+    
+    // Strategy 3: LLM-generated combinations for wild creativity
+    if (creativityLevel === 'wild' && combinations.length < count) {
+      const llmCombinations = await this.getLLMSuggestions(
+        `Generate ${count - combinations.length} creative domain names for "${description}" using these TLDs: ${tlds.slice(0, 10).join(', ')}. Focus on unusual, memorable combinations.`,
+        creativityLevel
+      );
+      
+      llmCombinations.forEach(domain => {
+        if (this.isValidDomain(domain) && combinations.length < count) {
+          combinations.push({
+            domain,
+            strategy: 'llm-wild'
+          });
+        }
+      });
+    }
+    
+    return combinations.slice(0, count);
+  }
+
+  private generateStandoutReason(domain: string, strategy: string, keywords: string[]): string {
+    const base = domain.split('.')[0];
+    const tld = domain.split('.')[1];
+    
+    if (strategy === 'direct-keyword') {
+      return `Direct keyword "${base}" with ${tld} TLD - clear and memorable`;
+    } else if (strategy === 'creative-word') {
+      return `Creative word "${base}" with ${tld} TLD - brandable and unique`;
+    } else if (strategy === 'llm-intelligent-tld') {
+      return `AI-brainstormed combination with ${tld} TLD - intelligent TLD selection`;
+    } else if (strategy === 'llm-wild') {
+      return `AI-generated combination with ${tld} TLD - innovative approach`;
+    } else if (tld === 'ai') {
+      return `Perfect AI TLD match for tech business`;
+    } else if (tld === 'io') {
+      return `Popular tech TLD for startups`;
+    } else if (tld === 'app') {
+      return `App-focused TLD for digital products`;
+    } else if (tld === 'dev') {
+      return `Developer-friendly TLD`;
+    } else if (tld === 'tech') {
+      return `Technology-focused TLD`;
+    } else if (['fun', 'party', 'club', 'bar', 'pub', 'love', 'sexy', 'hot', 'cool'].includes(tld)) {
+      return `Fun and memorable ${tld} TLD - great for branding`;
+    } else if (['pizza', 'coffee', 'beer', 'wine', 'vodka'].includes(tld)) {
+      return `Unique ${tld} TLD - stands out from competition`;
+    } else {
+      return `Creative combination with ${tld} TLD`;
+    }
+  }
+
+  private async analyzeBatchForStandouts(
+    results: DomainResult[],
+    businessDescription: string,
+    keywords: string[],
+    creativityLevel: string
+  ): Promise<Array<{ domain: string; score: number; reason: string }>> {
+    const availableResults = results.filter(r => r.available && r.score >= 7);
+    
+    if (availableResults.length === 0) return [];
+    
+    // Create prompt for LLM analysis
+    const domainsList = availableResults.map(r => `${r.domain} (score: ${r.score})`).join('\n');
+    const prompt = `Analyze these domain names for "${businessDescription}" and identify the most standout/remarkable ones:
+
+${domainsList}
+
+Keywords: ${keywords.join(', ')}
+
+For each standout domain, explain why it's special (memorable, clever, brandable, etc.). Return only the most exceptional 3-5 domains with brief explanations.
+
+Format: domain name - brief reason why it stands out`;
+
+    try {
+      const llmResponse = await this.getLLMSuggestions(prompt);
+      const standouts: Array<{ domain: string; score: number; reason: string }> = [];
+      
+      for (const response of llmResponse) {
+        const lines = response.split('\n').filter(line => line.trim());
+        for (const line of lines) {
+          const match = line.match(/^([a-zA-Z0-9.-]+)\s*-\s*(.+)$/);
+          if (match) {
+            const domain = match[1];
+            const reason = match[2];
+            const result = availableResults.find(r => r.domain === domain);
+            if (result) {
+              standouts.push({
+                domain,
+                score: result.score,
+                reason: reason.trim()
+              });
+            }
+          }
+        }
+      }
+      
+      return standouts;
+    } catch (error) {
+      // Fallback: return high-scoring domains
+      return availableResults
+        .filter(r => r.score >= 8)
+        .slice(0, 3)
+        .map(r => ({
+          domain: r.domain,
+          score: r.score,
+          reason: `High-scoring domain (${r.score}/10) with ${r.strategy} strategy`
+        }));
+    }
   }
 } 
