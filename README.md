@@ -109,7 +109,7 @@ deep-tld for "coffee shop" with wild creativity
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=halfaipg/domain-finder-mcp&type=Date)](https://star-history.com/#halfaipg/domain-finder-mcp&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=halfaipg/domain-finder-mcp&type=Date)](https://www.star-history.com/#halfaipg/domain-finder-mcp&Date)
 
 ## License
 
