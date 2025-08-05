@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "domain-finder": {
+      "command": "node",
+      "args": ["dist/server.js", "--stdio"],
+      "cwd": "."
+    }
+  }
+}

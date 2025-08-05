@@ -43,7 +43,7 @@ Then edit `.env` with your API keys and restart your MCP tool.
 ## Configuration
 
 ### Domain Providers
-- **Namecheap**: Requires $50 spent on account or some other prerequisite
+- **Namecheap**: Requires 20+ domains registered, $50 minimum balance, and $50+ spent in last 2 years
 - **Domainr**: RapidAPI integration, free tier
 
 ### LLM Providers

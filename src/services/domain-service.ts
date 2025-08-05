@@ -51,6 +51,9 @@ const OLLAMA_API = process.env.OLLAMA_API_URL || 'http://127.0.0.1:11434/api/gen
 const LLM_PROVIDER = process.env.LLM_PROVIDER || 'ollama';
 const DOMAIN_PROVIDER = process.env.DOMAIN_PROVIDER || 'domainr';
 
+// Blacklisted TLDs that are not purchasable
+const BLACKLISTED_TLDS = ['.data'];
+
 // Load ALL TLDs from file
 const loadAllTlds = (): string[] => {
   try {
@@ -59,7 +62,8 @@ const loadAllTlds = (): string[] => {
     return content.split('\n')
       .map(line => line.trim().toLowerCase())
       .filter(line => line && !line.startsWith('#'))
-      .map(tld => tld.startsWith('.') ? tld : `.${tld}`);
+      .map(tld => tld.startsWith('.') ? tld : `.${tld}`)
+      .filter(tld => !BLACKLISTED_TLDS.includes(tld));
   } catch (error) {
     return ['.com', '.net', '.org', '.io', '.ai', '.app', '.co', '.dev'];
   }
@@ -89,7 +93,7 @@ export class DomainService {
     this.allTlds = loadAllTlds();
     
     this.techTlds = this.allTlds.filter(tld => 
-      ['.ai', '.tech', '.io', '.app', '.dev', '.software', '.digital', '.cloud', '.data', '.computer', '.network', '.systems', '.science'].includes(tld)
+      ['.ai', '.tech', '.io', '.app', '.dev', '.software', '.digital', '.cloud', '.computer', '.network', '.systems', '.science'].includes(tld)
     );
     
     this.funTlds = this.allTlds.filter(tld => 
