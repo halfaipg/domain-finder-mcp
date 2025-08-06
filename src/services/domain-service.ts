@@ -52,7 +52,7 @@ const LLM_PROVIDER = process.env.LLM_PROVIDER || 'ollama';
 const DOMAIN_PROVIDER = process.env.DOMAIN_PROVIDER || 'domainr';
 
 // Blacklisted TLDs that are not purchasable
-const BLACKLISTED_TLDS = ['.data'];
+const BLACKLISTED_TLDS = ['.data', '.pg'];
 
 // Load ALL TLDs from file
 const loadAllTlds = (): string[] => {
