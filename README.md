@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/halfaipg-domain-finder-mcp-badge.png)](https://mseep.ai/app/halfaipg-domain-finder-mcp)
+
 # Domain Finder MCP Server
 
 Intelligent domain name suggestion MCP server with real-time availability checking. Works with Cursor, Claude Code, and other MCP tools.
