@@ -5,6 +5,8 @@ import { NamecheapProvider } from '../providers/namecheap.js';
 import { config } from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 
 config();
 
@@ -49,6 +51,9 @@ const OPENAI_API = {
 
 const OLLAMA_API = process.env.OLLAMA_API_URL || 'http://127.0.0.1:11434/api/generate';
 const LLM_PROVIDER = process.env.LLM_PROVIDER || 'ollama';
+const CLAUDE_BIN = process.env.CLAUDE_BIN || 'claude';
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || '';
+const execFileAsync = promisify(execFile);
 const DOMAIN_PROVIDER = process.env.DOMAIN_PROVIDER || 'domainr';
 
 // Blacklisted TLDs that are not purchasable
@@ -516,6 +521,11 @@ export class DomainService {
       Math.floor(count * 0.6) // 60% from LLM brainstorming
     );
     domains.push(...llmDomains);
+
+    // If the LLM delivered, skip the mechanical strategies — they outscore and bury its picks
+    if (llmDomains.length >= 5) {
+      return domains;
+    }
     
     // Strategy 2: Direct keyword combinations (reduced)
     for (const keyword of keywords.slice(0, 2)) {
@@ -675,7 +685,13 @@ Respond with ONLY domain names, one per line.`;
     
     const temperature = getTemperature(creativityLevel);
     try {
-      if (LLM_PROVIDER === "openai") {
+      if (LLM_PROVIDER === "claude") {
+        // Uses the local Claude Code CLI in headless mode (no API key needed)
+        const args = ['-p', prompt, '--output-format', 'text'];
+        if (CLAUDE_MODEL) args.push('--model', CLAUDE_MODEL);
+        const { stdout } = await execFileAsync(CLAUDE_BIN, args, { timeout: 120000, maxBuffer: 1024 * 1024 });
+        return this.parseLLMResponse(stdout);
+      } else if (LLM_PROVIDER === "openai") {
         const response = await axios.post(OPENAI_API.url, {
           model: OPENAI_API.model,
           messages: [{ role: "user", content: prompt }],
@@ -915,7 +931,7 @@ Be creative! Think outside the box. Try different approaches:
 - What TLDs relate thematically to this business?
 - What unexpected TLD combinations might be brilliant?
 
-Return domain names in any format, one per line. Focus on the most creative and memorable combinations you can think of.`;
+Return 25-40 domain names, one per line, with no numbering, commentary, or explanations. Favor short, brandable, professional names. Focus on the most creative and memorable combinations you can think of.`;
 
     try {
       const llmSuggestions = await this.getLLMSuggestions(prompt, creativityLevel);

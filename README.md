@@ -47,6 +47,7 @@ Then edit `.env` with your API keys and restart your MCP tool.
 - **Domainr**: RapidAPI integration, free tier
 
 ### LLM Providers
+- **Claude (no API key)**: `LLM_PROVIDER=claude` uses your local Claude Code CLI (`claude -p`). Optional `CLAUDE_MODEL`, `CLAUDE_BIN`
 - **Local**: Ollama with any local model
 - **Cloud**: OpenAI, Groq, Together AI, Anthropic etc
 - **Custom**: Any OpenAI-compatible endpoint
