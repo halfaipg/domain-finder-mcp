@@ -2,8 +2,7 @@
   "mcpServers": {
     "domain-finder": {
       "command": "node",
-      "args": ["dist/server.js", "--stdio"],
-      "cwd": "."
+      "args": ["/absolute/path/to/domain-finder-mcp/dist/server.js"]
     }
   }
 }

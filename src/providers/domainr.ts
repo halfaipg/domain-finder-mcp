@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { config } from 'dotenv';
 
+import { AvailabilityProvider, CheckResult, normalizeDomain } from './types.js';
+
 config();
 
 interface DomainrSearchResult {
@@ -26,7 +28,10 @@ interface SearchOptions {
   location?: string;
 }
 
-export class DomainrProvider {
+// Legacy: Domainr's RapidAPI endpoint is deprecated in favour of Fastly's Domain Research API.
+// Kept for people who still have a working key; the keyless RDAP provider is the default.
+export class DomainrProvider implements AvailabilityProvider {
+  readonly name = 'domainr';
   private rapidApiKey: string;
   private rapidApiHost: string;
   private baseUrl = 'https://domainr.p.rapidapi.com/v2';
@@ -89,6 +94,29 @@ export class DomainrProvider {
       domain: domainList
     });
     return response.status;
+  }
+
+  async check(domains: string[]): Promise<CheckResult[]> {
+    const results: CheckResult[] = [];
+    const batchSize = 5;
+    for (let i = 0; i < domains.length; i += batchSize) {
+      const batch = domains.slice(i, i + batchSize).map(normalizeDomain);
+      results.push(...await Promise.all(batch.map(async (domain): Promise<CheckResult> => {
+        try {
+          const answer = (await this.checkDomainStatus(domain))[0];
+          if (!answer) return { domain, status: 'unknown', source: 'none', isPremium: false, note: 'Domainr returned no status' };
+          const status = answer.status || '';
+          const available = answer.summary === 'inactive' || /\binactive\b/.test(status);
+          return { domain, status: available ? 'available' : 'taken', source: 'domainr', isPremium: /premium|priced/.test(status) };
+        } catch (error) {
+          return { domain, status: 'unknown', source: 'none', isPremium: false, note: error instanceof Error ? error.message : 'Domainr lookup failed' };
+        }
+      })));
+      if (i + batchSize < domains.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    return results;
   }
 
   async searchAndCheck(query: string, options: SearchOptions = {}): Promise<{
