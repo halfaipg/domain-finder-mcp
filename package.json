@@ -1,27 +1,44 @@
 {
   "name": "domain-finder-mcp",
-  "version": "1.0.0",
-  "description": "Intelligent domain name suggestion MCP server with real-time availability checking",
+  "version": "1.1.0",
+  "description": "MCP server that finds available domain names: keyless availability checks via RDAP/DNS, typical prices, and every registrable TLD",
+  "mcpName": "io.github.halfaipg/domain-finder-mcp",
   "type": "module",
   "main": "dist/server.js",
+  "bin": {
+    "domain-finder-mcp": "dist/server.js"
+  },
+  "files": [
+    "dist",
+    "data",
+    "tlds.txt",
+    ".env.example"
+  ],
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js --stdio",
+    "prepare": "npm run build",
+    "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
+    "update-tlds": "node scripts/update-tlds.mjs",
     "setup": "./setup.sh"
   },
   "keywords": [
     "mcp",
     "domain",
     "domain-names",
+    "rdap",
+    "tld",
     "ai",
     "cursor",
     "claude-code",
-    "namecheap",
-    "domainr"
+    "namecheap"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/halfaipg/domain-finder-mcp.git"
+  },
   "author": "",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.0",
     "axios": "^1.6.7",

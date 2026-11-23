@@ -1,68 +1,45 @@
 #!/bin/bash
+# Domain Finder MCP Server setup: installs, builds, and prints the config to paste into your MCP tool.
+# Nothing outside this folder is modified.
+set -e
+cd "$(dirname "$0")"
 
-# Domain Finder MCP Server Setup Script
-echo "🚀 Setting up Domain Finder MCP Server..."
-
-# Check if Node.js is installed
 if ! command -v node &> /dev/null; then
-    echo "❌ Node.js is not installed. Please install Node.js first:"
-    echo "   https://nodejs.org/"
+    echo "Node.js is not installed. Install Node 18 or newer from https://nodejs.org/ and run this again."
     exit 1
 fi
 
-echo "✅ Node.js found: $(node --version)"
+NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]')
+if [ "$NODE_MAJOR" -lt 18 ]; then
+    echo "Node $(node --version) is too old. Install Node 18 or newer from https://nodejs.org/ and run this again."
+    exit 1
+fi
 
-# Install dependencies
-echo "📦 Installing dependencies..."
+echo "Installing dependencies and building..."
 npm install
 
-# Build the project
-echo "🔨 Building the project..."
-npm run build
+SERVER="$(pwd)/dist/server.js"
 
-# Check if .env exists, if not copy from example
-if [ ! -f .env ]; then
-    echo "📝 Creating .env file from template..."
-    cp .env.example .env
-    echo "⚠️  Please edit .env with your API keys before using the server"
-else
-    echo "✅ .env file already exists"
-fi
+cat <<EOF
 
-# Check if Cursor config directory exists
-CURSOR_CONFIG_DIR="$HOME/.cursor"
-if [ ! -d "$CURSOR_CONFIG_DIR" ]; then
-    echo "📁 Creating Cursor config directory..."
-    mkdir -p "$CURSOR_CONFIG_DIR"
-fi
+Setup complete. No API keys are needed.
 
-# Copy MCP config to Cursor (if Cursor is available)
-if [ -d "$CURSOR_CONFIG_DIR" ]; then
-    echo "⚙️  Installing MCP configuration for Cursor..."
-    cp .cursor/mcp.json "$CURSOR_CONFIG_DIR/mcp.json"
-    CURSOR_CONFIG_INSTALLED=true
-else
-    echo "ℹ️  Cursor config directory not found, skipping Cursor setup"
-    CURSOR_CONFIG_INSTALLED=false
-fi
+Claude Code:
+  claude mcp add domain-finder -- node "$SERVER"
 
-echo ""
-echo "🎉 Setup complete!"
-echo ""
-echo "📋 Next steps:"
-echo "1. Edit .env with your API keys"
-echo "2. Configure your MCP tool (Cursor, Claude Code, etc.)"
-echo "3. Test with: 'Suggest domain names for my business'"
-echo ""
-echo "🔧 Configuration files:"
-echo "   - Environment: .env"
-if [ "$CURSOR_CONFIG_INSTALLED" = true ]; then
-    echo "   - Cursor MCP: $CURSOR_CONFIG_DIR/mcp.json"
-fi
-echo ""
-echo "🛠️  MCP Server Settings:"
-echo "   - Command: node"
-echo "   - Arguments: [\"dist/server.js\", \"--stdio\"]"
-echo "   - Working Directory: $(pwd)"
-echo ""
-echo "📚 For detailed setup instructions, see README.md" 
+Cursor, Claude Desktop and other MCP tools - add this to the tool's MCP config
+(Cursor: ~/.cursor/mcp.json):
+
+  {
+    "mcpServers": {
+      "domain-finder": {
+        "command": "node",
+        "args": ["$SERVER"]
+      }
+    }
+  }
+
+Then restart the tool and ask: "Find me an available domain for a coffee roasting business"
+
+Optional: registrar premium pricing via Namecheap is described in .env.example.
+EOF

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { config } from 'dotenv';
 import { XMLParser } from 'fast-xml-parser';
+import { AvailabilityProvider, CheckResult, normalizeDomain } from './types.js';
 
 config();
 
@@ -20,7 +21,8 @@ interface NamecheapConfig {
   baseUrl: string;
 }
 
-export class NamecheapProvider {
+export class NamecheapProvider implements AvailabilityProvider {
+  readonly name = 'namecheap';
   private config: NamecheapConfig;
   private xmlParser: XMLParser;
 
@@ -58,7 +60,7 @@ export class NamecheapProvider {
       const response = await axios.get(`${this.config.baseUrl}?${params.toString()}`, {
         timeout: 30000,
         headers: {
-          'User-Agent': 'BrandstormAI/1.0'
+          'User-Agent': 'domain-finder-mcp'
         }
       });
 
@@ -128,6 +130,25 @@ export class NamecheapProvider {
     } catch (error) {
       throw new Error(`Failed to parse Namecheap response: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  async check(domains: string[]): Promise<CheckResult[]> {
+    const normalized = domains.map(normalizeDomain);
+    const answers = await this.checkDomainsInBatches(normalized);
+    const byDomain = new Map(answers.map(a => [a.domain.toLowerCase(), a]));
+    return normalized.map(domain => {
+      const answer = byDomain.get(domain);
+      if (!answer || answer.status === 'error') {
+        return { domain, status: 'unknown', source: 'none', isPremium: false, note: 'Namecheap lookup failed' };
+      }
+      return {
+        domain,
+        status: answer.available ? 'available' : 'taken',
+        source: 'namecheap',
+        isPremium: answer.isPremium,
+        premiumPrice: answer.premiumPrice
+      };
+    });
   }
 
   // Batch check domains with rate limiting (Namecheap allows up to 20 domains per request)
