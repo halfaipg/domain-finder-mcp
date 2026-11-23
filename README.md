@@ -7,7 +7,6 @@
 **Your AI assistant brainstorms the names. This checks which ones you can actually buy.**
 
 [![npm version](https://img.shields.io/npm/v/domain-finder-mcp?color=3ddc97)](https://www.npmjs.com/package/domain-finder-mcp)
-[![npm downloads](https://img.shields.io/npm/dm/domain-finder-mcp?color=3ddc97)](https://www.npmjs.com/package/domain-finder-mcp)
 [![GitHub stars](https://img.shields.io/github/stars/halfaipg/domain-finder-mcp?color=3ddc97)](https://github.com/halfaipg/domain-finder-mcp/stargazers)
 [![License](https://img.shields.io/github/license/halfaipg/domain-finder-mcp?color=3ddc97)](LICENSE)
 [![Node 18+](https://img.shields.io/badge/node-18%2B-3ddc97)](https://nodejs.org/)
