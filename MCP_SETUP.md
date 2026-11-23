@@ -7,7 +7,7 @@ No API keys are required. Node.js 18 or newer is.
 **Claude Code**
 
 ```bash
-claude mcp add domain-finder -- npx -y github:halfaipg/domain-finder-mcp
+claude mcp add domain-finder -- npx -y domain-finder-mcp
 ```
 
 **Cursor, Claude Desktop, other MCP tools** - add to the tool's MCP config:
@@ -17,7 +17,7 @@ claude mcp add domain-finder -- npx -y github:halfaipg/domain-finder-mcp
   "mcpServers": {
     "domain-finder": {
       "command": "npx",
-      "args": ["-y", "github:halfaipg/domain-finder-mcp"]
+      "args": ["-y", "domain-finder-mcp"]
     }
   }
 }

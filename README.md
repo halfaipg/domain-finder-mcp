@@ -6,6 +6,8 @@
 
 **Your AI assistant brainstorms the names. This checks which ones you can actually buy.**
 
+[![npm version](https://img.shields.io/npm/v/domain-finder-mcp?color=3ddc97)](https://www.npmjs.com/package/domain-finder-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/domain-finder-mcp?color=3ddc97)](https://www.npmjs.com/package/domain-finder-mcp)
 [![GitHub stars](https://img.shields.io/github/stars/halfaipg/domain-finder-mcp?color=3ddc97)](https://github.com/halfaipg/domain-finder-mcp/stargazers)
 [![License](https://img.shields.io/github/license/halfaipg/domain-finder-mcp?color=3ddc97)](LICENSE)
 [![Node 18+](https://img.shields.io/badge/node-18%2B-3ddc97)](https://nodejs.org/)
@@ -27,7 +29,7 @@ Requires [Node.js](https://nodejs.org/) 18 or newer.
 ### Claude Code
 
 ```bash
-claude mcp add domain-finder -- npx -y github:halfaipg/domain-finder-mcp
+claude mcp add domain-finder -- npx -y domain-finder-mcp
 ```
 
 ### Cursor, Claude Desktop, and other MCP tools
@@ -39,7 +41,7 @@ Add this to the tool's MCP config (Cursor: `~/.cursor/mcp.json`, Claude Desktop:
   "mcpServers": {
     "domain-finder": {
       "command": "npx",
-      "args": ["-y", "github:halfaipg/domain-finder-mcp"]
+      "args": ["-y", "domain-finder-mcp"]
     }
   }
 }
@@ -135,7 +137,7 @@ If the chosen provider is missing credentials, the server falls back to the keyl
 ## Troubleshooting
 
 - **The tool does not show up**: restart your MCP client after changing its config.
-- **`npx` is slow the first time**: it downloads and builds the server once, then caches it.
+- **`npx` is slow the first time**: it downloads the server once, then caches it.
 - **"COULD NOT CHECK"**: the registry did not answer (usually rate limiting). Run the check again.
 - **Using a clone**: point the config at the absolute path, `"command": "node", "args": ["/path/to/domain-finder-mcp/dist/server.js"]`.
 
