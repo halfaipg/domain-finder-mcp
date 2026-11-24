@@ -13,6 +13,8 @@
 [![MCP server](https://img.shields.io/badge/MCP-server-3ddc97)](https://modelcontextprotocol.io/)
 [![No API keys](https://img.shields.io/badge/API%20keys-none%20needed-3ddc97)](#install)
 
+[![halfaipg/domain-finder-mcp MCP server](https://glama.ai/mcp/servers/halfaipg/domain-finder-mcp/badges/score.svg)](https://glama.ai/mcp/servers/halfaipg/domain-finder-mcp)
+
 [Install](#install) · [Tools](#tools) · [Data sources](#where-the-data-comes-from) · [Configuration](#optional-configuration)
 
 </div>
